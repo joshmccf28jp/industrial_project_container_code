@@ -1,0 +1,126 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+
+  <ui:define name="title">Configure Uploads</ui:define>
+  <ui:define name="content">
+    <div class="ui-g">
+      <div class="ui-g-12">
+        <div class="card">
+          <h:form id="form">
+            <p:growl id="simpleMsgs" showDetail="false"/>
+            <p:growl id="detailedMsgs" for="growl-detailed" showDetail="true"/>
+            <p:ajax event="keydown" onstart="if (event.keyCode == 13) {event.preventDefault(); event.stopPropagation();return false; }"/>
+
+            <p:dataTable id="data" var="config" value="#{SyncConfigDataBean.data}" resizableColumns="true" 
+                         editable="true" styleClass="addRowTable" >
+              <f:facet name="header">
+                Uploads
+              </f:facet>
+
+              <p:ajax event="rowEdit" listener="#{SyncConfigDataBean.onRowEdit}" update="data form:simpleMsgs form:detailedMsgs" oncomplete="if (args &amp;&amp; !args.validationFailed) {$('.ui-row-editor a.ui-row-editor-pencil').each(function(){$(this).css('visibility','visible')});$('.hide-on-edit').each(function(){$(this).css('visibility','visible')});} else {$('.hide-on-edit').each(function(){$(this).css('visibility','hidden')});}"/>
+              <p:ajax event="rowEditCancel" listener="#{SyncConfigDataBean.onRowCancel}" update="data form:simpleMsgs form:detailedMsgs"  onstart="$('.ui-row-editor a.ui-row-editor-pencil').each(function(){$(this).css('visibility','visible')});$('.hide-on-edit').each(function(){$(this).css('visibility','visible')});"/>
+              <p:ajax event="rowEditInit" oncomplete="$('.ui-row-editor a.ui-row-editor-pencil').each(function(){$(this).css('visibility','hidden')});$('.hide-on-edit').each(function(){$(this).css('visibility','hidden')});" />
+
+              <p:column headerText="Name" width="100">
+                <p:cellEditor>
+                  <f:facet name="output"><h:outputText value="#{config.name}" /></f:facet>
+                  <f:facet name="input">
+                    <p:inputText value="#{config.name}" label="Name" style="width:90%" maxlength="255" required="true"/>
+                  </f:facet>
+                </p:cellEditor>
+              </p:column>
+
+              <p:column headerText="Local Dir" width="200" >
+                <p:cellEditor>
+                  <f:facet name="output"><h:outputText value="#{config.sourceConfig.localDir}" /></f:facet>
+                  <f:facet name="input">
+                    <p:autoComplete id="localDir" label="Local Dir" value="#{config.sourceConfig.localDir}" size="35"
+                                    required="true" dropdownMode="current" dropdown="true" completeMethod="#{SyncConfigDataBean.completeLocalDir}"
+                                    scrollHeight="200"/>
+                  </f:facet>
+                </p:cellEditor>
+              </p:column>
+
+              <p:column headerText="Remote Credentials" width="100">
+                <p:cellEditor>
+                  <f:facet name="output"><h:outputText value="#{config.destinationConfig.credentials}" /></f:facet>
+                  <f:facet name="input">
+
+                    <p:selectOneMenu id="s3Credentials" value="#{config.destinationConfig.credentials}" autoWidth="false" style="width:80%" >
+                      <f:selectItems value="#{SyncConfigDataBean.s3Credentials}" var="targetCredentials" 
+                                     itemLabel="#{targetCredentials}" itemValue="#{targetCredentials}" />
+                    </p:selectOneMenu>
+
+                  </f:facet>
+                </p:cellEditor>
+              </p:column>
+
+              <p:column headerText="File Extensions" width="100">
+                <p:cellEditor>
+                  <f:facet name="output">
+                    <p:chips value="#{config.fileExtensions}" label="File Extensions" required="false" disabled="true" />
+                  </f:facet>
+                  <f:facet name="input">
+                    <p:chips value="#{config.fileExtensions}" size="4" maxlength="4"  label="File Extensions" required="false" />
+                  </f:facet>
+                </p:cellEditor>
+              </p:column>
+
+              <p:column headerText="Recurse Dirs" width="50" style="text-align: center;" resizable="false">
+                <p:cellEditor>
+                  <f:facet name="output">
+                    <p:selectBooleanCheckbox value="#{config.isDirRecursive}" disabled="true"/></f:facet>
+                  <f:facet name="input">
+                    <p:selectBooleanCheckbox value="#{config.isDirRecursive}" />
+                  </f:facet>
+                </p:cellEditor>
+              </p:column>
+
+              <p:column width="15" resizable="false">    
+                <p:commandLink id="testConnection" class="hide-on-edit" style="display: inline-block; margin-right: 10px" 
+                               action="#{SyncConfigDataBean.testConnection(config)}" update="data form:simpleMsgs form:detailedMsgs">
+                  <i class="fa fa-lg fa-check-square-o"></i>
+                </p:commandLink>
+                <p:tooltip for="testConnection" value="Test Connection" position="left"/>
+              </p:column>
+
+              <p:column width="32" rendered="#{request.isUserInRole('CONFIG_ROLE') or request.isUserInRole('ADMIN_ROLE')}" resizable="false">
+                <p:rowEditor />
+              </p:column>
+
+              <p:column width="15" rendered="#{request.isUserInRole('CONFIG_ROLE') or request.isUserInRole('ADMIN_ROLE')}" resizable="false">
+                <p:commandLink id="deleteItem" class="hide-on-edit" action="#{SyncConfigDataBean.onRowDelete(config)}" update="data form:simpleMsgs form:detailedMsgs" >
+                  <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
+                  <i class="fa fa-lg fa-trash"></i>
+                </p:commandLink>
+                <p:tooltip for="deleteItem" value="Delete Upload Configuration" position="left"/>
+              </p:column>
+
+              <f:facet name="footer">
+                <p:commandLink class="hide-on-edit" value="Add Upload" actionListener="#{SyncConfigDataBean.onAddRow}" update="data form:simpleMsgs form:detailedMsgs" 
+                               process="@this" rendered="#{request.isUserInRole('CONFIG_ROLE') or request.isUserInRole('ADMIN_ROLE')}"
+                               oncomplete="jQuery('#form\\:data tbody.ui-datatable-data tr:last-child').find('span.ui-icon-pencil').each(function(){jQuery(this).click()});"
+                               />
+              </f:facet>
+            </p:dataTable>
+
+            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+              <p:commandButton value="Yes" type="button" styleClass="ui-confirmdialog-yes" icon="ui-icon-check" />
+              <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no" icon="ui-icon-close" />
+            </p:confirmDialog>
+
+            <p:dialog header="Basic Dialog" widgetVar="dlg1" minHeight="40">
+              <h:outputText value="Resistance to PrimeFaces is futile!" />
+            </p:dialog>
+          </h:form>
+        </div>
+      </div>
+    </div>
+
+  </ui:define>
+
+</ui:composition>

@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app version="3.1"
+         xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd">
+    <!-- IMPORTANT!!!!!!!!!!!!!!!! -->
+    <!-- These startup the Generic DAO and scheduler manager and are the only things that should generally change -->
+    <!-- in the web.xml. -->
+    <filter>
+        <filter-name>SecurityFilter</filter-name>
+        <filter-class>com.energysys.connector.web.filter.SecurityFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>SecurityFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+    <listener>
+        <listener-class>com.energysys.connector.database.derby.StartupListener</listener-class>
+    </listener>
+    <listener>
+        <listener-class>com.energysys.connector.schedulers.quartz.StartupListener</listener-class>
+    </listener>
+    <!-- Standard web pages setup -->
+    <welcome-file-list>
+        <welcome-file>dashboard.xhtml</welcome-file>
+    </welcome-file-list>
+    <error-page>
+        <error-code>404</error-code>
+        <location>/404.xhtml</location>
+    </error-page>
+    <error-page>
+        <error-code>403</error-code>
+        <location>/access.xhtml</location>
+    </error-page>
+    <error-page>
+        <location>/error.xhtml</location>
+    </error-page>
+    <!-- Session -->
+    <context-param>
+        <param-name>org.eclipse.jetty.servlet.SessionCookie</param-name>
+        <param-value>JSESSIONID-FILE</param-value>
+    </context-param>
+    <context-param>
+        <param-name>org.eclipse.jetty.servlet.SessionPath</param-name>
+        <param-value>/</param-value>
+    </context-param>
+    <session-config>
+        <session-timeout>30</session-timeout>
+        <cookie-config>
+            <http-only>true</http-only>
+            <secure>true</secure>
+        </cookie-config>
+        <tracking-mode>COOKIE</tracking-mode>
+    </session-config>
+    <!-- JSF Setup -->
+    <context-param>
+        <param-name>javax.faces.PROJECT_STAGE</param-name>
+        <param-value>Production</param-value>
+    </context-param>
+    <servlet>
+        <servlet-name>Faces Servlet</servlet-name>
+        <servlet-class>javax.faces.webapp.FacesServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>Faces Servlet</servlet-name>
+        <url-pattern>*.xhtml</url-pattern>
+    </servlet-mapping>
+    <listener>
+        <listener-class>com.sun.faces.config.ConfigureListener</listener-class>
+    </listener>
+    <context-param>
+        <param-name>javax.faces.DATETIMECONVERTER_DEFAULT_TIMEZONE_IS_SYSTEM_TIMEZONE</param-name>
+        <param-value>true</param-value>
+    </context-param>
+    <!-- Primefaces setup -->
+    <context-param>
+        <param-name>primefaces.THEME</param-name>
+        <param-value>omega</param-value>
+    </context-param>
+    <context-param>
+        <param-name>primefaces.FONT_AWESOME</param-name>
+        <param-value>true</param-value>
+    </context-param>
+    <mime-mapping>
+        <extension>woff2</extension>
+        <mime-type>application/x-font-woff2</mime-type>
+    </mime-mapping>
+    <mime-mapping>
+        <extension>eot</extension>
+        <mime-type>application/vnd.ms-fontobject</mime-type>
+    </mime-mapping>
+    <mime-mapping>
+        <extension>otf</extension>
+        <mime-type>font/opentype</mime-type>
+    </mime-mapping>
+    <mime-mapping>
+        <extension>ttf</extension>
+        <mime-type>application/x-font-ttf</mime-type>
+    </mime-mapping>
+    <mime-mapping>
+        <extension>woff</extension>
+        <mime-type>application/x-font-woff</mime-type>
+    </mime-mapping>
+    <mime-mapping>
+        <extension>svg</extension>
+        <mime-type>image/svg+xml</mime-type>
+    </mime-mapping>
+    <!-- Security Setup -->
+    <login-config>
+        <auth-method>FORM</auth-method>
+        <realm-name>Connector JDBC Realm</realm-name>
+        <form-login-config>
+            <form-login-page>/login/login.xhtml</form-login-page>
+            <form-error-page>/login/login.xhtml?message=Login failed, please try again.</form-error-page>
+        </form-login-config>
+    </login-config>
+    <security-constraint>
+        <display-name>Unprotected Area</display-name>
+        <web-resource-collection>
+            <web-resource-name>Resources</web-resource-name>
+            <description/>
+            <url-pattern>/resources/*</url-pattern>
+            <url-pattern>/404.xhtml</url-pattern>
+            <url-pattern>/access.xhtml</url-pattern>
+            <url-pattern>/error.xhtml</url-pattern>
+        </web-resource-collection>
+    </security-constraint>
+    <security-constraint>
+        <display-name>User pages</display-name>
+        <web-resource-collection>
+            <web-resource-name>Home pages</web-resource-name>
+            <description/>
+            <url-pattern>/dashboard.xhtml</url-pattern>
+            <url-pattern>/about.xhtml</url-pattern>
+            <url-pattern/>
+        </web-resource-collection>
+        <auth-constraint>
+            <description/>
+            <role-name>USER_ROLE</role-name>
+            <role-name>ADMIN_ROLE</role-name>
+            <role-name>CONFIG_ROLE</role-name>
+        </auth-constraint>
+        <user-data-constraint>
+            <description/>
+            <transport-guarantee>CONFIDENTIAL</transport-guarantee>
+        </user-data-constraint>
+    </security-constraint>
+    <security-constraint>
+        <display-name>Admin pages</display-name>
+        <web-resource-collection>
+            <web-resource-name>Admin pages</web-resource-name>
+            <description/>
+            <url-pattern>/admin/*</url-pattern>
+        </web-resource-collection>
+        <auth-constraint>
+            <description/>
+            <role-name>ADMIN_ROLE</role-name>
+        </auth-constraint>
+        <user-data-constraint>
+            <description/>
+            <transport-guarantee>CONFIDENTIAL</transport-guarantee>
+        </user-data-constraint>
+    </security-constraint>
+    <security-constraint>
+        <display-name>Config pages</display-name>
+        <web-resource-collection>
+            <web-resource-name>Admin pages</web-resource-name>
+            <description/>
+            <url-pattern>/config/*</url-pattern>
+        </web-resource-collection>
+        <auth-constraint>
+            <description/>
+            <role-name>ADMIN_ROLE</role-name>
+            <role-name>CONFIG_ROLE</role-name>
+            <role-name>USER_ROLE</role-name>
+        </auth-constraint>
+        <user-data-constraint>
+            <description/>
+            <transport-guarantee>CONFIDENTIAL</transport-guarantee>
+        </user-data-constraint>
+    </security-constraint>
+    <security-role>
+        <description>Admin User</description>
+        <role-name>ADMIN_ROLE</role-name>
+    </security-role>
+    <security-role>
+        <description>Configurator</description>
+        <role-name>CONFIGURATOR_ROLE</role-name>
+    </security-role>
+    <security-role>
+        <description>Standard User</description>
+        <role-name>USER_ROLE</role-name>
+    </security-role>
+</web-app>

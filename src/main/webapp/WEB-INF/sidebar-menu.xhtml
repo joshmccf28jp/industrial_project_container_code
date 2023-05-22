@@ -1,0 +1,33 @@
+<ui:composition 
+  xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:f="http://java.sun.com/jsf/core"
+  xmlns:h="http://java.sun.com/jsf/html"
+  xmlns:ui="http://java.sun.com/jsf/facelets"
+  xmlns:p="http://primefaces.org/ui"
+  xmlns:po="http://primefaces.org/omega">
+
+  <div class="menu">
+    <po:menu>
+      <p:menuitem id="om_dashboard" value="Event Log" icon="fa fa-info-circle" outcome="/dashboard.xhtml"/>
+
+      <p:menuitem id="om_uploader_jobs" value="Configure Uploads" icon="fa fa-upload" outcome="/config/sync_configurations.xhtml"/>
+      <p:menuitem id="om_schedule_jobs" value="Scheduled Jobs" icon="fa fa-calendar" outcome="/config/schedule_jobs.xhtml"/>
+
+      <p:submenu id="om_config" label="Security"  rendered="#{request.isUserInRole('CONFIG_ROLE') or request.isUserInRole('ADMIN_ROLE')}">
+        <p:menuitem id="om_manage_certificates" value="Manage Certificates" icon="fa fa-certificate" outcome="/config/certificates.xhtml"/>
+        <p:menuitem id="om_manage_credentials" value="Manage Credentials" icon="fa fa-address-card" outcome="/config/credentials.xhtml"/>
+      </p:submenu>
+
+      <p:submenu id="om_admin" label="Administration"  rendered="#{request.isUserInRole('ADMIN_ROLE')}">
+        <p:menuitem id="om_manage_users" value="Manage Users" icon="fa fa-users" outcome="/admin/manage_users.xhtml"/>
+        <p:menuitem id="om_import_export" value="Import Export" icon="fa fa-cogs" outcome="/admin/import_export.xhtml"/>
+      </p:submenu>
+
+      <p:menuitem id="om_about" value="About" icon="fa fa-info" outcome="/about.xhtml"/>
+
+    </po:menu>
+
+  </div>
+
+
+</ui:composition>

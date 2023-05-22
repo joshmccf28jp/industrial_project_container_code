@@ -1,0 +1,137 @@
+  <ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template.xhtml">
+
+  <ui:define name="title">Scheduled Jobs</ui:define>
+  <ui:define name="content">
+    <div class="ui-g">
+      <div class="ui-g-12">
+        <div class="card">
+          <h:form id="form">
+            <p:growl id="simpleMsgs" showDetail="false"/>
+            <p:growl id="detailedMsgs" for="growl-detailed" showDetail="true"/>
+
+            <p:dataTable id="data" var="job" value="#{ScheduledJobDataBean.data}" resizableColumns="true" 
+                         rowKey="#{job.id}" editable="true" styleClass="addRowTable" >
+              <f:facet name="header">
+                Jobs
+              </f:facet>
+
+              <p:ajax event="rowEdit" listener="#{ScheduledJobDataBean.onRowEdit}" update="form:simpleMsgs form:detailedMsgs" oncomplete="if (args &amp;&amp; !args.validationFailed) {$('.ui-row-editor a.ui-row-editor-pencil').each(function(){$(this).css('visibility','visible')});$('.hide-on-edit').each(function(){$(this).css('visibility','visible')});} else {$('.hide-on-edit').each(function(){$(this).css('visibility','hidden')});}"/>
+              <p:ajax event="rowEditCancel" listener="#{ScheduledJobDataBean.onRowCancel}" update="data form:simpleMsgs form:detailedMsgs"  onstart="$('.ui-row-editor a.ui-row-editor-pencil').each(function(){$(this).css('visibility','visible')});$('.hide-on-edit').each(function(){$(this).css('visibility','visible')});"/>
+              <p:ajax event="rowEditInit" listener="#{ScheduledJobDataBean.onRowEditInit}" update=" form:simpleMsgs form:detailedMsgs"  oncomplete="$('.ui-row-editor a.ui-row-editor-pencil').each(function(){$(this).css('visibility','hidden')});$('.hide-on-edit').each(function(){$(this).css('visibility','hidden')});" />
+
+
+              <p:column headerText="Name" width="100">
+                <p:cellEditor>
+                  <f:facet name="output"><h:outputText value="#{job.name}" /></f:facet>
+                  <f:facet name="input">
+                    <p:inputText id="jobName" value="#{job.name}" maxlength="255" label="Job Name" required="true" >
+                    </p:inputText>
+                  </f:facet>
+                </p:cellEditor>
+              </p:column>
+
+              <p:column headerText="Upload" width="100">
+                <p:cellEditor>
+                  <f:facet name="output"><h:outputText value="#{ScheduledJobDataBean.getExecuterForJob(job).getTargetWithID(job.jobExecuterTarget).name}" /></f:facet>
+                  <f:facet name="input">
+                    <p:selectOneMenu id="targetJob" value="#{job.jobExecuterTarget}" autoWidth="false" style="width:80%">
+                      <f:selectItems value="#{ScheduledJobDataBean.getExecuterForJob(job).targets}" var="targetJob" itemLabel="#{targetJob.name}" itemValue="#{targetJob.id}"  />
+                    </p:selectOneMenu>
+                  </f:facet>
+                </p:cellEditor>
+              </p:column>
+
+              <p:column headerText="Start Date" width="155">
+                <p:cellEditor>
+                  <f:facet name="output">
+                    <h:outputText value="#{job.startDate}"><f:convertDateTime pattern="dd/MM/yyyy HH:mm" /></h:outputText>
+                  </f:facet>
+                  <f:facet name="input">
+                    <p:calendar id="startDate" value="#{job.startDate}" showOn="button" pattern="dd/MM/yyyy HH:mm" label="Start Date"/>
+                  </f:facet>
+                </p:cellEditor>
+              </p:column>
+
+              <p:column headerText="End Date" width="155">
+                <p:cellEditor>
+                  <f:facet name="output">
+                    <h:outputText value="#{job.endDate}"><f:convertDateTime timeZone="" pattern="dd/MM/yyyy HH:mm" /></h:outputText>
+                  </f:facet>
+                  <f:facet name="input">
+                    <p:calendar id="endDate" value="#{job.endDate}" showOn="button" pattern="dd/MM/yyyy HH:mm" label="End Date"/>
+                  </f:facet>
+                </p:cellEditor>
+              </p:column>
+
+              <p:column headerText="Repeat Every" width="120">
+                <p:cellEditor>
+                  <f:facet name="output"><h:outputText value="#{job.repeatValue} #{job.repeatInterval}" />
+                  </f:facet>
+                  <f:facet name="input">
+                    <p:inputText id="repeatValue" value="#{job.repeatValue}" maxlength="3" size="3" label="Repeat Value" style="width: 30px">
+                    </p:inputText>
+                    <p:selectOneMenu id="repeatInterval" value="#{job.repeatInterval}" label="Repeat Interval" style="margin-left: 5px" required="true">
+                      <f:selectItems value="#{ScheduledJobDataBean.repeatIntervals}" var="interval" itemLabel="#{interval}" itemValue="#{interval}"  />
+                    </p:selectOneMenu>
+                  </f:facet>
+                </p:cellEditor>
+              </p:column>
+
+              <p:column headerText="Is Active" width="40" style="text-align: center;" resizable="false">
+                <p:cellEditor>
+                  <f:facet name="output">
+                    <p:selectBooleanCheckbox value="#{job.isActive}" disabled="true"/></f:facet>
+                  <f:facet name="input">
+                    <p:selectBooleanCheckbox value="#{job.isActive}" />
+                  </f:facet>
+                </p:cellEditor>
+              </p:column>
+
+              <p:column width="15" resizable="false">    
+                <p:commandLink id="runJob" class="hide-on-edit" style="display: inline-block; margin-right: 10px" 
+                               action="#{ScheduledJobDataBean.runJob(job)}" update="data form:simpleMsgs form:detailedMsgs" >
+                  <i class="fa fa-lg fa-play"></i>
+                </p:commandLink>
+                <p:tooltip for="runJob" value="Run Job" position="left"/>
+              </p:column>
+
+              <p:column  width="32" rendered="#{request.isUserInRole('CONFIG_ROLE') or request.isUserInRole('ADMIN_ROLE')}" resizable="false">
+                <p:rowEditor />
+              </p:column>
+
+              <p:column  width="15" rendered="#{request.isUserInRole('CONFIG_ROLE') or request.isUserInRole('ADMIN_ROLE')}" resizable="false">
+                <p:commandLink id="deleteItem" class="hide-on-edit" action="#{ScheduledJobDataBean.onRowDelete(job)}" update="data form:simpleMsgs form:detailedMsgs" >
+                  <p:confirm header="Confirmation" message="Are you sure?" icon="ui-icon-alert" />
+                  <i class="fa fa-lg fa-trash"></i>
+                  <p:tooltip for="deleteItem" value="Delete Job" position="left"/>
+                </p:commandLink>
+              </p:column>
+
+              <f:facet name="footer">
+                <p:spacer />
+                <p:commandLink class="hide-on-edit" value="Add Job" actionListener="#{ScheduledJobDataBean.onAddRow}" update="data form:simpleMsgs form:detailedMsgs" 
+                               process="@this" 
+                               oncomplete="jQuery('#form\\:data tbody.ui-datatable-data tr:last-child').find('span.ui-icon-pencil').each(function(){jQuery(this).click()});"
+                               rendered="#{request.isUserInRole('CONFIG_ROLE') or request.isUserInRole('ADMIN_ROLE')}"/>
+
+              </f:facet>
+            </p:dataTable>
+
+            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+              <p:commandButton value="Yes" type="button" styleClass="ui-confirmdialog-yes" icon="ui-icon-check" />
+              <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no" icon="ui-icon-close" />
+            </p:confirmDialog>
+
+          </h:form>
+        </div>
+      </div>
+    </div>
+
+  </ui:define>
+
+</ui:composition>

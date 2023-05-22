@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure_9_0.dtd">
+<Configure class="org.eclipse.jetty.webapp.WebAppContext">
+
+  <Set name="securityHandler">
+    <New class="org.eclipse.jetty.security.ConstraintSecurityHandler">
+      <Set name="loginService">
+        <New class="org.eclipse.jetty.security.JDBCLoginService">
+          <Set name="name">Connector JDBC Realm</Set>
+          <Set name="config">etc/connector.jdbcRealm.properties</Set>
+        </New>
+      </Set>
+    </New>
+  </Set>
+
+  <Call name="setInitParameter">
+    <Arg>org.eclipse.jetty.servlet.SessionCookie</Arg>
+    <Arg>FileConnectorWEB</Arg>
+  </Call>
+
+  <Call name="setAttribute">
+    <Arg>org.eclipse.jetty.server.webapp.ContainerIncludeJarPattern</Arg>
+    <Arg>.*/jetty-servlet-api-[^/]*\.jar$|.*/javax.servlet.jsp.jstl-.*\.jar$|.*/org.apache.taglibs.taglibs-standard-impl-.*\.jar$|.*/jsf-[^/]*\.jar$</Arg>
+  </Call>
+
+</Configure>
